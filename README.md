@@ -1,0 +1,106 @@
+# Worker Farm [![Build Status](https://secure.travis-ci.org/rvagg/node-worker-farm.png)](http://travis-ci.org/rvagg/node-worker-farm)
+
+Distribute processing tasks to child processes with an über-simple API and baked-in durability & custom concurrency options. *Available in npm as <strong>worker-farm</strong>*.
+
+## Example
+
+Given a file, *child.js*:
+
+```js
+module.exports = function (inp, callback) {
+  callback(null, inp + ' BAR (' + process.pid + ')')
+}
+```
+
+And a main file:
+
+```js
+var workerFarm = require('worker-farm')
+  , workers    = workerFarm(require.resolve('./child'))
+  , ret        = 0
+
+for (var i = 0; i < 10; i++) {
+  workers('#' + i + ' FOO', function (err, outp) {
+    console.log(outp)
+    if (++ret == 10)
+      workerFarm.end(workers)
+  })
+}
+```
+
+We'll get an output something like the following:
+
+```
+#1 FOO BAR (8546)
+#0 FOO BAR (8545)
+#8 FOO BAR (8545)
+#9 FOO BAR (8546)
+#2 FOO BAR (8548)
+#4 FOO BAR (8551)
+#3 FOO BAR (8549)
+#6 FOO BAR (8555)
+#5 FOO BAR (8553)
+#7 FOO BAR (8557)
+```
+
+This example is contained in the *[examples/basic](https://github.com/rvagg/node-worker-farm/tree/master/examples/basic/)* directory.
+
+### Example #1: Estimating π using child workers
+
+You will also find a more complex example in *[examples/pi](https://github.com/rvagg/node-worker-farm/tree/master/examples/pi/)* that estimates the value of **π** by using a Monte Carlo *area-under-the-curve* method and compares the speed of doing it all in-process vs using child workers to complete separate portions.
+
+## Durability
+
+An important feature of Worker Farm is **call durability**. If a child process dies for any reason during the execution of call(s), those calls will be re-queued and taken care of by other child processes. In this way, when you ask for something to be done, unless there is something *seriously* wrong with what you're doing, you should get a result on your callback function.
+
+## My use-case
+
+There are other libraries for managing worker processes available but my use-case was fairly specific: I need to make heavy use of the [node-java](https://github.com/nearinfinity/node-java) library to interact with JVM code. Unfortunately, because the JVM garbage collector is so difficult to interact with, it's prone to killing your Node process when the GC kicks under heavy load. For safety I needed a durable way to make calls so that (1) it wouldn't kill my main process and (2) any calls that weren't successful would be resubmitted for processing.
+
+Worker Farm allows me to spin up multiple JVMs to be controlled by Node, and have a single, uncomplicated API that acts the same way as an in-process API and the calls will be taken care of by a child process even if an error kills a child process while it is working as the call will simply be passed to a new child process.
+
+**But**, don't think that Worker Farm is specific to that use-case, it's designed to be very generic and simple to adapt to anything requiring the use of child Node processes.
+
+## API
+
+Worker Farm exports a main function an an `end()` method. The main function sets up a "farm" of coordinated child-process workers and it can be used to instantiate multiple farms, all operating independently.
+
+### workerFarm([options, ]pathToModule[, exportedMethods])
+
+In its most basic form, you call `workerFarm()` with the path to a module file to be invoked by the child process. You should use an **absolute path** to the module file, the best way to obtain the path is with `require.resolve('./path/to/module')`, this function can be used in exactly the same way as `require('./path/to/module')` but it returns an absolute path.
+
+#### `exportedMethods`
+
+If your module exports a single function on `module.exports` then you should omit the final parameter. However, if you are exporting multiple functions on `module.exports` then you should list them in an Array of Strings:
+
+```js
+var workers = workerFarm(require.resolve('./mod'), [ 'doSomething', 'doSomethingElse' ])
+workers.doSomething(function () {})
+workers.doSomethingElse(function () {})
+```
+
+Listing the available methods will instruct Worker Farm what API to provide you with on the returned object. If you don't list a `exportedMethods` Array then you'll get a single callable function to use; but if you list the available methods then you'll get an object with callable functions by those names.
+
+**It is assumed that each function you call on your child module will take a `callback` function as the last argument.**
+
+#### `options`
+
+If you don't provide an `options` object then the following defaults will be used:
+
+```js
+{
+    maxCallsPerWorker           : -1
+  , maxConcurrentWorkers        : require('os').cpus().length
+  , maxConcurrentCallsPerWorker : 10
+}
+```
+
+  * **<code>maxCallsPerWorker</code>** allows you to control the lifespan of your child processes. A positive number will indicate that you only want each child to accept that many calls before it is terminated. This may be useful if you need to control memory leaks or similar in child processes.
+
+  * **<code>maxConcurrentWorkers</code>** will set the number of child processes to maintain concurrently. By default it is set to the number of CPUs available on the current system, but it can be any reasonable number, including `1`.
+
+  * **<code>maxConcurrentCallsPerWorker</code>** allows you to control the *concurrency* of individual child processes. Calls are placed into a queue and farmed out to child processes according to the number of calls they are allowed to handle concurrently. It is arbitrarily set to 10 by default so that calls are shared relatively evenly across workers, however if your calls predictably take a similar amount of time then you could set it to `-1` and Worker Farm won't queue any calls but spread them evenly across child processes and let them go at it. If your calls aren't I/O bound then it won't matter what value you use here as the individual workers won't be able to execute more than a single call at a time.
+
+## Licence
+
+Worker Farm is Copyright (c) 2012 Rod Vagg [@rvagg](https://twitter.com/rvagg) and licenced under the MIT licence. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.

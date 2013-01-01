@@ -49,6 +49,17 @@ This example is contained in the *[examples/basic](https://github.com/rvagg/node
 
 You will also find a more complex example in *[examples/pi](https://github.com/rvagg/node-worker-farm/tree/master/examples/pi/)* that estimates the value of **π** by using a Monte Carlo *area-under-the-curve* method and compares the speed of doing it all in-process vs using child workers to complete separate portions.
 
+Running `node examples/pi` will give you something like:
+
+```
+Doing it the slow (single-process) way...
+π ≈ 3.1416269360000006  (0.0000342824102075312 away from actual!)
+took 8341 milliseconds
+Doing it the fast (multi-process) way...
+π ≈ 3.1416233600000036  (0.00003070641021052367 away from actual!)
+took 1985 milliseconds
+```
+
 ## Durability
 
 An important feature of Worker Farm is **call durability**. If a child process dies for any reason during the execution of call(s), those calls will be re-queued and taken care of by other child processes. In this way, when you ask for something to be done, unless there is something *seriously* wrong with what you're doing, you should get a result on your callback function.
@@ -100,6 +111,13 @@ If you don't provide an `options` object then the following defaults will be use
   * **<code>maxConcurrentWorkers</code>** will set the number of child processes to maintain concurrently. By default it is set to the number of CPUs available on the current system, but it can be any reasonable number, including `1`.
 
   * **<code>maxConcurrentCallsPerWorker</code>** allows you to control the *concurrency* of individual child processes. Calls are placed into a queue and farmed out to child processes according to the number of calls they are allowed to handle concurrently. It is arbitrarily set to 10 by default so that calls are shared relatively evenly across workers, however if your calls predictably take a similar amount of time then you could set it to `-1` and Worker Farm won't queue any calls but spread them evenly across child processes and let them go at it. If your calls aren't I/O bound then it won't matter what value you use here as the individual workers won't be able to execute more than a single call at a time.
+
+### workerFarm.end(farm)
+
+Child processes stay alive waiting for jobs indefinitely and your farm manager will stay alive managing its workers, so if you need it to stop then you have to do so explicitly. If you send your farm API to `workerFarm.end()` then it'll cleanly end your worker processes. Note though that it's a *soft* ending so it'll wait for child processes to finish what they are working on before asking them to die.
+
+Once you end a farm, it won't handle any more calls, so don't even try!
+
 
 ## Licence
 

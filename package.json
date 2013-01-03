@@ -13,10 +13,10 @@
       , "url"             : "https://github.com/rvagg/node-worker-farm.git"
     }
   , "dependencies" : {
-        "dtrace-provider": "*"
     }
   , "devDependencies" : {
         "tape"            : "*"
+      , "dtrace-provider" : "*"
     }
   , "scripts": {
         "test"            : "node ./tests/"

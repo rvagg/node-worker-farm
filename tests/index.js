@@ -234,3 +234,19 @@ tape('durability', function (t) {
     })
   }
 })
+
+// a callback provided to .end() can and will be called (uses "simple, exports=function test" to create a child)
+tape('simple, end callback', function (t) {
+  t.plan(4)
+
+  var child = workerFarm(childPath)
+  child(0, function (err, pid, rnd) {
+    t.ok(pid > process.pid, 'pid makes sense')
+    t.ok(pid < process.pid + 100, 'pid makes sense')
+    t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense')
+  })
+
+  workerFarm.end(child, function() {
+    t.pass('an .end() callback was successfully called')
+  });
+})

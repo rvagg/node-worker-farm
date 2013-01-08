@@ -35,5 +35,5 @@ var workerFarm = require('../../')
 console.log('Doing it the slow (single-process) way...')
 calc(calcDirect, function () {
   console.log('Doing it the fast (multi-process) way...')
-  calc(calcWorker, process.exit)
+  calc(calcWorker, workerFarm.end.bind(workerFarm, calcWorker))
 })

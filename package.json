@@ -13,6 +13,8 @@
       , "url"             : "https://github.com/rvagg/node-worker-farm.git"
     }
   , "dependencies" : {
+        "dtracer": "*",
+        "pkginfo":"*"
     }
   , "devDependencies" : {
         "tape"            : "*"

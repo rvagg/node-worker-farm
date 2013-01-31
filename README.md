@@ -116,6 +116,8 @@ If you don't provide an `options` object then the following defaults will be use
 
 Child processes stay alive waiting for jobs indefinitely and your farm manager will stay alive managing its workers, so if you need it to stop then you have to do so explicitly. If you send your farm API to `workerFarm.end()` then it'll cleanly end your worker processes. Note though that it's a *soft* ending so it'll wait for child processes to finish what they are working on before asking them to die.
 
+Any calls that are queued and not yet being handled by a child process will be discarded. `end()` only waits for those currently in progress.
+
 Once you end a farm, it won't handle any more calls, so don't even try!
 
 

@@ -14,3 +14,7 @@ module.exports.killable = function (id, callback) {
     return process.exit(-1)
   callback(null, id, process.pid)
 }
+
+module.exports.returnsError = function (callback) {
+  callback(new Error('whoops'))
+}

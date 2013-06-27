@@ -250,3 +250,14 @@ tape('simple, end callback', function (t) {
     t.pass('an .end() callback was successfully called')
   });
 })
+
+tape('error from callback', function (t) {
+  t.plan(1)
+
+  var child = workerFarm(childPath, ['returnsError'])
+  child.returnsError(function(err) {
+    t.equal(err.message, 'whoops', 'error message from child is passed correctly')
+  })
+
+  workerFarm.end(child, t.end.bind(t))
+})

@@ -172,12 +172,12 @@ tape('many concurrent calls', function (t) {
   var child = workerFarm({ maxConcurrentWorkers: 1 }, childPath)
     , i     = 10
     , cbc   = 0
-    , start = +new Date()
+    , start = Date.now()
 
   while (i--) {
     child(100, function () {
       if (++cbc == 10) {
-        var time = +new Date() - start
+        var time = Date.now() - start
         t.ok(time > 100 && time < 175, 'processed tasks concurrently (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
@@ -193,16 +193,19 @@ tape('many concurrent calls', function (t) {
 tape('single concurrent call', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 1 }, childPath)
+  var child = workerFarm(
+          { maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 1 }
+        , childPath
+      )
     , i     = 10
     , cbc   = 0
-    , start = +new Date()
+    , start = Date.now()
 
   while (i--) {
     child(10, function () {
       if (++cbc == 10) {
-        var time = +new Date() - start
-        t.ok(time > 100 && time < 175, 'processed tasks sequentially (' + time + 'ms)')
+        var time = Date.now() - start
+        t.ok(time > 100 && time < 190, 'processed tasks sequentially (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
@@ -219,12 +222,12 @@ tape('multiple concurrent calls', function (t) {
   var child = workerFarm({ maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 5 }, childPath)
     , i     = 10
     , cbc   = 0
-    , start = +new Date()
+    , start = Date.now()
 
   while (i--) {
     child(50, function () {
       if (++cbc == 10) {
-        var time = +new Date() - start
+        var time = Date.now() - start
         t.ok(time > 100 && time < 175, 'processed tasks concurrently (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')

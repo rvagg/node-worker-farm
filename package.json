@@ -13,6 +13,7 @@
       , "url"             : "https://github.com/rvagg/node-worker-farm.git"
     }
   , "dependencies" : {
+        "xtend"           : "~2.0.6"
     }
   , "devDependencies" : {
         "tape"            : "*"

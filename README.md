@@ -106,6 +106,7 @@ If you don't provide an `options` object then the following defaults will be use
     maxCallsPerWorker           : -1
   , maxConcurrentWorkers        : require('os').cpus().length
   , maxConcurrentCallsPerWorker : 10
+  , maxConcurrentCalls          : -1
   , maxCallTime                 : 0
 }
 ```
@@ -115,6 +116,8 @@ If you don't provide an `options` object then the following defaults will be use
   * **<code>maxConcurrentWorkers</code>** will set the number of child processes to maintain concurrently. By default it is set to the number of CPUs available on the current system, but it can be any reasonable number, including `1`.
 
   * **<code>maxConcurrentCallsPerWorker</code>** allows you to control the *concurrency* of individual child processes. Calls are placed into a queue and farmed out to child processes according to the number of calls they are allowed to handle concurrently. It is arbitrarily set to 10 by default so that calls are shared relatively evenly across workers, however if your calls predictably take a similar amount of time then you could set it to `-1` and Worker Farm won't queue any calls but spread them evenly across child processes and let them go at it. If your calls aren't I/O bound then it won't matter what value you use here as the individual workers won't be able to execute more than a single call at a time.
+
+  * **<code>maxConcurrentCalls</code>** allows you to control the maximum number of calls in the queue&mdash;either actively being processed or waiting for a worker to be processed. `-1` indicates no limit but if you have conditions that may endlessly queue jobs and you need to set a limit then provide a `>0` value and any calls that push the limit will return on their callback with a `MaxConcurrentCallsError` error (check `err.type == 'MaxConcurrentCallsError'`).
 
   * **<code>maxCallTime</code>** *(use with caution, understand what this does before you use it!)* when `> 0`, will cap a time, in milliseconds, that *any single call* can take to execute in a worker. If this time limit is exceeded by just a single call then the worker running that call will be killed and any calls running on that worker will have their callbacks returned with a `TimeoutError` (check `err.type == 'TimeoutError'`). If you are running with `'maxConcurrentCallsperWorker'` value greater than `1` then **all calls currently executing** will fail and not be automatically resubmitted. Use this if you have jobs that may potentially end in infinite loops that you can't programatically end with your child code. Preferably run this with a `'maxConcurrentCallsperWorker'` so you don't interrupt other calls when you have a timeout. This timeout operates on a per-call basis but will interrupt a whole worker.
 

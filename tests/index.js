@@ -357,6 +357,31 @@ tape('test error passing', function (t) {
   })
 })
 
+
+tape('test maxConcurrentCalls', function (t) {
+  t.plan(10)
+
+  var child = workerFarm({ maxConcurrentCalls: 5 }, childPath)
+
+  child(50, function (err) { t.notOk(err, 'no error') })
+  child(50, function (err) { t.notOk(err, 'no error') })
+  child(50, function (err) { t.notOk(err, 'no error') })
+  child(50, function (err) { t.notOk(err, 'no error') })
+  child(50, function (err) { t.notOk(err, 'no error') })
+  child(50, function (err) {
+    t.ok(err)
+    t.equal(err.type, 'MaxConcurrentCallsError', 'correct error type')
+  })
+  child(50, function (err) {
+    t.ok(err)
+    t.equal(err.type, 'MaxConcurrentCallsError', 'correct error type')
+  })
+
+  workerFarm.end(child, function () {
+    t.ok(true, 'workerFarm ended')
+  })
+})
+
 // this test should not keep the process running! if the test process
 // doesn't die then the problem is here
 tape('test timeout kill', function (t) {

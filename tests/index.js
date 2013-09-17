@@ -19,7 +19,7 @@ tape('simple, exports=function test', function (t) {
   child(0, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense')
     t.ok(pid < process.pid + 500, 'pid makes sense')
-    t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense')
+    t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
   workerFarm.end(child, function () {
@@ -35,7 +35,7 @@ tape('simple, exports.fn test', function (t) {
   child.run0(function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense')
     t.ok(pid < process.pid + 500, 'pid makes sense')
-    t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense')
+    t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
   workerFarm.end(child, function () {
@@ -270,7 +270,7 @@ tape('simple, end callback', function (t) {
   child(0, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(pid < process.pid + 500, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
+    t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
   workerFarm.end(child, function() {

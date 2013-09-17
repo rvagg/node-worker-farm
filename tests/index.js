@@ -33,8 +33,6 @@ tape('simple, exports.fn test', function (t) {
 
   var child = workerFarm(childPath, [ 'run0' ])
   child.run0(function (err, pid, rnd) {
-
-
     t.ok(pid > process.pid, 'pid makes sense')
     t.ok(pid < process.pid + 500, 'pid makes sense')
     t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense')
@@ -337,4 +335,24 @@ tape('call timeout test', function (t) {
       t.ok(true, 'workerFarm ended')
     })
   }, 400)
+})
+
+tape('test error passing', function (t) {
+  t.plan(7)
+
+  var child = workerFarm(childPath, [ 'err' ])
+  child.err('Error', 'this is an Error', function (err) {
+    t.ok(err instanceof Error, 'is an Error object')
+    t.equal('Error', err.type, 'correct type')
+    t.equal('this is an Error', err.message, 'correct message')
+  })
+  child.err('TypeError', 'this is a TypeError', function (err) {
+    t.ok(err instanceof Error, 'is a TypeError object')
+    t.equal('TypeError', err.type, 'correct type')
+    t.equal('this is a TypeError', err.message, 'correct message')
+  })
+
+  workerFarm.end(child, function () {
+    t.ok(true, 'workerFarm ended')
+  })
 })

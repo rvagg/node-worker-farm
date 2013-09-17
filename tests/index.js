@@ -176,7 +176,7 @@ tape('many concurrent calls', function (t) {
     child(100, function () {
       if (++cbc == 10) {
         var time = Date.now() - start
-        t.ok(time > 100 && time < 175, 'processed tasks concurrently (' + time + 'ms)')
+        t.ok(time > 100 && time < 200, 'processed tasks concurrently (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })

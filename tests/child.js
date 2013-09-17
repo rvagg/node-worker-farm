@@ -20,3 +20,7 @@ module.exports.err = function (type, message, callback) {
     return callback(new TypeError(message))
   callback(new Error(message))
 }
+
+module.exports.block = function () {
+  while (true);
+}

@@ -356,3 +356,19 @@ tape('test error passing', function (t) {
     t.ok(true, 'workerFarm ended')
   })
 })
+
+// this test should not keep the process running! if the test process
+// doesn't die then the problem is here
+tape('test timeout kill', function (t) {
+  t.plan(3)
+
+  var child = workerFarm({ maxCallTime: 250, maxConcurrentWorkers: 1 }, childPath, [ 'block' ])
+  child.block(function (err) {
+    t.ok(err, 'got an error')
+    t.equal(err.type, 'TimeoutError', 'correct error type')
+  })
+
+  workerFarm.end(child, function () {
+    t.ok(true, 'workerFarm ended')
+  })
+})

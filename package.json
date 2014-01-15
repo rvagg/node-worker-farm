@@ -15,6 +15,7 @@
   , "dependencies" : {
         "xtend"           : "~2.1.1"
       , "errno"           : "~0.1.0"
+      , "coffee-script"   : "~1.6.3"
     }
   , "devDependencies" : {
         "tape"            : "*"

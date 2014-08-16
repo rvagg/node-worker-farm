@@ -1,26 +1,31 @@
 {
-    "name"            : "worker-farm"
-  , "description"     : "Distribute processing tasks to child processes with an über-simple API and baked-in durability & custom concurrency options."
-  , "version"         : "0.3.1"
-  , "homepage"        : "https://github.com/rvagg/node-worker-farm"
-  , "authors"         : [
-        "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
-    ]
-  , "keywords"        : ["worker", "child", "processing", "farm" ]
-  , "main"            : "./lib/index.js"
-  , "repository"      : {
-        "type"            : "git"
-      , "url"             : "https://github.com/rvagg/node-worker-farm.git"
-    }
-  , "dependencies" : {
-        "xtend"           : "~2.1.1"
-      , "errno"           : "~0.1.0"
-    }
-  , "devDependencies" : {
-        "tape"            : "*"
-    }
-  , "scripts": {
-        "test"            : "node ./tests/"
-    }
-  , "license"             : "MIT"
+  "name": "worker-farm",
+  "description": "Distribute processing tasks to child processes with an über-simple API and baked-in durability & custom concurrency options.",
+  "version": "0.3.1",
+  "homepage": "https://github.com/rvagg/node-worker-farm",
+  "authors": [
+    "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
+  ],
+  "keywords": [
+    "worker",
+    "child",
+    "processing",
+    "farm"
+  ],
+  "main": "./lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvagg/node-worker-farm.git"
+  },
+  "dependencies": {
+    "errno": ">=0.1.1 <0.2.0-0",
+    "xtend": ">=4.0.0 <4.1.0-0"
+  },
+  "devDependencies": {
+    "tape": ">=2.14.0 <2.15.0-0"
+  },
+  "scripts": {
+    "test": "node ./tests/"
+  },
+  "license": "MIT"
 }

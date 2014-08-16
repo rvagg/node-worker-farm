@@ -2,7 +2,7 @@ const CHILDREN         = 500
     , POINTS_PER_CHILD = 1000000
     , FARM_OPTIONS     = {
           maxConcurrentWorkers        : require('os').cpus().length
-        , maxCallsPerWorker           : -1
+        , maxCallsPerWorker           : Infinity
         , maxConcurrentCallsPerWorker : 1
       }
 

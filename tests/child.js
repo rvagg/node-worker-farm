@@ -1,3 +1,5 @@
+var fs = require('fs')
+
 module.exports = function (timeout, callback) {
   callback = callback.bind(null, null, process.pid, Math.random(), timeout)
   if (timeout)
@@ -23,4 +25,28 @@ module.exports.err = function (type, message, callback) {
 
 module.exports.block = function () {
   while (true);
+}
+
+// use provided file path to save retries count among terminated workers
+module.exports.stubborn = function (path, callback) {
+  function isOutdated(path) {
+    return ((new Date).getTime() - fs.statSync(path).mtime.getTime()) > 2000
+  }
+
+  // file may not be properly deleted, check if modified no earler than two seconds ago
+  if (!fs.existsSync(path) || isOutdated(path)) {
+    fs.writeFileSync(path, '1')
+    process.exit(-1)
+  }
+
+  var retry = parseInt(fs.readFileSync(path, 'utf8'))
+  if (Number.isNaN(retry))
+    return callback(new Error('file contents is not a number'))
+
+  if (retry > 4) {
+    callback(null, 12)
+  } else {
+    fs.writeFileSync(path, String(retry + 1))
+    process.exit(-1)
+  }
 }

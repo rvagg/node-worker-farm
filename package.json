@@ -22,7 +22,7 @@
     "xtend": ">=4.0.0 <4.1.0-0"
   },
   "devDependencies": {
-    "tape": ">=2.14.0 <2.15.0-0"
+    "tape": ">=3.0.3 <3.1.0-0"
   },
   "scripts": {
     "test": "node ./tests/"

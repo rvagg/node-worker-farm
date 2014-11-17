@@ -1,6 +1,7 @@
 var tape       = require('tape')
   , workerFarm = require('../')
   , childPath  = require.resolve('./child')
+  , fs         = require('fs')
 
   , uniq = function (ar) {
       var a = [], i, j
@@ -394,6 +395,37 @@ tape('test timeout kill', function (t) {
   })
 
   workerFarm.end(child, function () {
+    t.ok(true, 'workerFarm ended')
+  })
+})
+
+
+tape('test max retries after process terminate', function (t) {
+  t.plan(7)
+
+  // temporary file is used to store the number of retries among terminating workers
+  var filepath1 = '.retries1'
+  var child1 = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5}, childPath, [ 'stubborn' ])
+  child1.stubborn(filepath1, function (err, result) {
+    t.notOk(err, 'no error')
+    t.equal(result, 12, 'correct result')
+  })
+
+  workerFarm.end(child1, function () {
+    fs.unlinkSync(filepath1)
+    t.ok(true, 'workerFarm ended')
+  })
+
+  var filepath2 = '.retries2'
+  var child2 = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 3}, childPath, [ 'stubborn' ])
+  child2.stubborn(filepath2, function (err, result) {
+    t.ok(err, 'got an error')
+    t.equal(err.type, 'ProcessTerminatedError', 'correct error type')
+    t.equal(err.message, 'cancel after 3 retries!', 'correct message and number of retries')
+  })
+
+  workerFarm.end(child2, function () {
+    fs.unlinkSync(filepath2)
     t.ok(true, 'workerFarm ended')
   })
 })

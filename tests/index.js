@@ -118,6 +118,26 @@ tape('many workers', function (t) {
   })
 })
 
+tape('auto start workers', function (t) {
+  t.plan(4)
+
+  var child = workerFarm({ maxConcurrentWorkers: 3, autoStart: true }, childPath, ['uptime'])
+    , pids  = []
+    , i     = 3
+    , delay = 150
+
+  setTimeout(function() {
+    while (i--)
+      child.uptime(function (err, uptime) {
+        t.ok(uptime > 10, 'child has been up before the request')
+      })
+
+    workerFarm.end(child, function () {
+      t.ok(true, 'workerFarm ended')
+    })
+  }, delay)
+})
+
 // use the returned pids to check that we're using a child process per
 // call when we set maxCallsPerWorker = 1 even when we have maxConcurrentWorkers = 1
 tape('single call per worker', function (t) {

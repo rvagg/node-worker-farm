@@ -50,3 +50,8 @@ module.exports.stubborn = function (path, callback) {
     process.exit(-1)
   }
 }
+
+var started = Date.now()
+module.exports.uptime = function(callback) {
+  callback(null, Date.now() - started)
+}

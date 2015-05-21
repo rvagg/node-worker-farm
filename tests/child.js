@@ -23,7 +23,9 @@ module.exports.err = function (type, message, data, callback) {
     data = null
   } else {
     var err = new Error(message)
-    err.data = data
+    Object.keys(data).forEach(function(key) {
+      err[key] = data[key]
+    })
     callback(err)
     return
   }

@@ -359,7 +359,7 @@ tape('call timeout test', function (t) {
 })
 
 tape('test error passing', function (t) {
-  t.plan(9)
+  t.plan(10)
 
   var child = workerFarm(childPath, [ 'err' ])
   child.err('Error', 'this is an Error', function (err) {
@@ -372,9 +372,10 @@ tape('test error passing', function (t) {
     t.equal('TypeError', err.type, 'correct type')
     t.equal('this is a TypeError', err.message, 'correct message')
   })
-  child.err('Error', 'this is an Error with data', {foo: 'bar'}, function (err) {
+  child.err('Error', 'this is an Error with custom props', {foo: 'bar', 'baz': 1}, function (err) {
     t.ok(err instanceof Error, 'is an Error object')
-    t.deepEqual(err.data, {foo: 'bar'}, 'passes data')
+    t.equal(err.foo, 'bar', 'passes data')
+    t.equal(err.baz, 1, 'passes data')
   })
 
   workerFarm.end(child, function () {

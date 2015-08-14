@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "errno": ">=0.1.1 <0.2.0-0",
-    "xtend": ">=4.0.0 <4.1.0-0"
+    "xtend": ">=4.0.0 <4.1.0-0",
+    "eventemitter2": ">=0.4.14"
   },
   "devDependencies": {
     "tape": ">=3.0.3 <3.1.0-0"

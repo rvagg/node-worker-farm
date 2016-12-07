@@ -79,9 +79,19 @@ Worker Farm allows me to spin up multiple JVMs to be controlled by Node, and hav
 
 Worker Farm exports a main function and an `end()` method. The main function sets up a "farm" of coordinated child-process workers and it can be used to instantiate multiple farms, all operating independently.
 
-### workerFarm([options, ]pathToModule[, exportedMethods])
+### workerFarm([options, pathToModule, exportedMethods])
 
 In its most basic form, you call `workerFarm()` with the path to a module file to be invoked by the child process. You should use an **absolute path** to the module file, the best way to obtain the path is with `require.resolve('./path/to/module')`, this function can be used in exactly the same way as `require('./path/to/module')` but it returns an absolute path.
+
+#### `pathToModule`
+By specifying `pathToModule` parameter you'll create farm bound to specified module. You can omit this parameter if you want to call functions from different modules. In such case you should pass path to module as first argument on worker call:
+
+```js
+var workers = workerFarm()
+workers(require.resolve('./mod1'), someArg, function () {})
+workers(require.resolve('./mod2'), someArg1, someArg2, function () {})
+```
+Note that in multi-mode your modules should export a single function.
 
 #### `exportedMethods`
 

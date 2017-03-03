@@ -137,7 +137,7 @@ Once you end a farm, it won't handle any more calls, so don't even try!
 
 ## Related
 
-* [worker-farm-cli](https://github.com/Kikobeats/worker-farm-cli#worker-farm-cli) – Launch a farm of workers from CLI.
+* [farm-cli](https://github.com/Kikobeats/farm-cli) – Launch a farm of workers from CLI.
 
 ## License
 

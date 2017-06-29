@@ -1,7 +1,8 @@
-var tape       = require('tape')
-  , workerFarm = require('../')
-  , childPath  = require.resolve('./child')
-  , fs         = require('fs')
+var tape          = require('tape')
+  , child_process = require('child_process')
+  , workerFarm    = require('../')
+  , childPath     = require.resolve('./child')
+  , fs            = require('fs')
 
   , uniq = function (ar) {
       var a = [], i, j
@@ -452,5 +453,21 @@ tape('test max retries after process terminate', function (t) {
   workerFarm.end(child2, function () {
     fs.unlinkSync(filepath2)
     t.ok(true, 'workerFarm ended')
+  })
+})
+
+tape('ensure --debug not propagated to children', function (t) {
+  t.plan(3)
+
+  var script = __dirname + '/debug.js'
+  var child = child_process.spawn('node', ['--debug=8881', script]);
+  var stdout = '';
+  child.stdout.on('data', function (data) {
+    stdout += data.toString()
+  })
+  child.on('close', function (code) {
+    t.ok(code === 0, 'exited without error')
+    t.ok(stdout.indexOf('FINISHED') > -1, 'process finished')
+    t.ok(stdout.indexOf('--debug') === -1, 'child does not receive debug flag')
   })
 })

@@ -7,6 +7,12 @@ module.exports = function (timeout, callback) {
   callback()
 }
 
+module.exports.args = function (callback) {
+  console.log(process.argv)
+  console.log(process.execArgv)
+  callback()
+}
+
 module.exports.run0 = function (callback) {
   module.exports(0, callback)
 }

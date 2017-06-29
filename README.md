@@ -135,6 +135,9 @@ Any calls that are queued and not yet being handled by a child process will be d
 
 Once you end a farm, it won't handle any more calls, so don't even try!
 
+## Related
+
+* [farm-cli](https://github.com/Kikobeats/farm-cli) – Launch a farm of workers from CLI.
 
 ## License
 

@@ -1,23 +1,24 @@
-var tape          = require('tape')
-  , child_process = require('child_process')
-  , workerFarm    = require('../')
-  , childPath     = require.resolve('./child')
-  , fs            = require('fs')
+const tape          = require('tape')
+    , child_process = require('child_process')
+    , workerFarm    = require('../')
+    , childPath     = require.resolve('./child')
+    , fs            = require('fs')
 
-  , uniq = function (ar) {
-      var a = [], i, j
-      o: for (i = 0; i < ar.length; ++i) {
-        for (j = 0; j < a.length; ++j) if (a[j] == ar[i]) continue o
-        a[a.length] = ar[i]
-      }
-      return a
-    }
+function uniq (ar) {
+  let a = [], i, j
+  o: for (i = 0; i < ar.length; ++i) {
+    for (j = 0; j < a.length; ++j) if (a[j] == ar[i]) continue o
+    a[a.length] = ar[i]
+  }
+  return a
+}
+
 
 // a child where module.exports = function ...
 tape('simple, exports=function test', function (t) {
   t.plan(4)
 
-  var child = workerFarm(childPath)
+  let child = workerFarm(childPath)
   child(0, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense')
     t.ok(pid < process.pid + 500, 'pid makes sense')
@@ -29,11 +30,12 @@ tape('simple, exports=function test', function (t) {
   })
 })
 
+
 // a child where we have module.exports.fn = function ...
 tape('simple, exports.fn test', function (t) {
   t.plan(4)
 
-  var child = workerFarm(childPath, [ 'run0' ])
+  let child = workerFarm(childPath, [ 'run0' ])
   child.run0(function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense')
     t.ok(pid < process.pid + 500, 'pid makes sense')
@@ -45,14 +47,13 @@ tape('simple, exports.fn test', function (t) {
   })
 })
 
+
 // use the returned pids to check that we're using a single child process
 // when maxConcurrentWorkers = 1
 tape('single worker', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 1 }, childPath)
-
-
+  let child = workerFarm({ maxConcurrentWorkers: 1 }, childPath)
     , pids  = []
     , i     = 10
 
@@ -71,12 +72,13 @@ tape('single worker', function (t) {
   })
 })
 
+
 // use the returned pids to check that we're using two child processes
 // when maxConcurrentWorkers = 2
 tape('two workers', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 2 }, childPath)
+  let child = workerFarm({ maxConcurrentWorkers: 2 }, childPath)
     , pids  = []
     , i     = 10
 
@@ -95,12 +97,13 @@ tape('two workers', function (t) {
   })
 })
 
+
 // use the returned pids to check that we're using a child process per
 // call when maxConcurrentWorkers = 10
 tape('many workers', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 10 }, childPath)
+  let child = workerFarm({ maxConcurrentWorkers: 10 }, childPath)
     , pids  = []
     , i     = 10
 
@@ -119,10 +122,11 @@ tape('many workers', function (t) {
   })
 })
 
+
 tape('auto start workers', function (t) {
   t.plan(4)
 
-  var child = workerFarm({ maxConcurrentWorkers: 3, autoStart: true }, childPath, ['uptime'])
+  let child = workerFarm({ maxConcurrentWorkers: 3, autoStart: true }, childPath, ['uptime'])
     , pids  = []
     , i     = 3
     , delay = 150
@@ -139,12 +143,13 @@ tape('auto start workers', function (t) {
   }, delay)
 })
 
+
 // use the returned pids to check that we're using a child process per
 // call when we set maxCallsPerWorker = 1 even when we have maxConcurrentWorkers = 1
 tape('single call per worker', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 1, maxCallsPerWorker: 1 }, childPath)
+  let child = workerFarm({ maxConcurrentWorkers: 1, maxCallsPerWorker: 1 }, childPath)
     , pids  = []
     , i     = 10
 
@@ -162,12 +167,13 @@ tape('single call per worker', function (t) {
   }
 })
 
+
 // use the returned pids to check that we're using a child process per
 // two-calls when we set maxCallsPerWorker = 2 even when we have maxConcurrentWorkers = 1
 tape('two calls per worker', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 1, maxCallsPerWorker: 2 }, childPath)
+  let child = workerFarm({ maxConcurrentWorkers: 1, maxCallsPerWorker: 2 }, childPath)
     , pids  = []
     , i     = 10
 
@@ -185,11 +191,12 @@ tape('two calls per worker', function (t) {
   }
 })
 
+
 // use timing to confirm that one worker will process calls sequentially
 tape('many concurrent calls', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 1 }, childPath)
+  let child = workerFarm({ maxConcurrentWorkers: 1 }, childPath)
     , i     = 10
     , cbc   = 0
     , start = Date.now()
@@ -197,8 +204,8 @@ tape('many concurrent calls', function (t) {
   while (i--) {
     child(100, function () {
       if (++cbc == 10) {
-        var time = Date.now() - start
-        t.ok(time > 100 && time < 200, 'processed tasks concurrently (' + time + 'ms)')
+        let time = Date.now() - start
+        t.ok(time > 100 && time < 250, 'processed tasks concurrently (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
@@ -208,12 +215,13 @@ tape('many concurrent calls', function (t) {
   }
 })
 
+
 // use timing to confirm that one child processes calls sequentially with
 // maxConcurrentCallsPerWorker = 1
 tape('single concurrent call', function (t) {
   t.plan(2)
 
-  var child = workerFarm(
+  let child = workerFarm(
           { maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 1 }
         , childPath
       )
@@ -222,10 +230,10 @@ tape('single concurrent call', function (t) {
     , start = Date.now()
 
   while (i--) {
-    child(10, function () {
+    child(20, function () {
       if (++cbc == 10) {
-        var time = Date.now() - start
-        t.ok(time > 100 && time < 190, 'processed tasks sequentially (' + time + 'ms)')
+        let time = Date.now() - start
+        t.ok(time > 200 && time < 400, 'processed tasks sequentially (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
@@ -234,21 +242,22 @@ tape('single concurrent call', function (t) {
     })
   }
 })
+
 
 // use timing to confirm that one child processes *only* 5 calls concurrently
 tape('multiple concurrent calls', function (t) {
   t.plan(2)
 
-  var child = workerFarm({ maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 5 }, childPath)
+  let child = workerFarm({ maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 5 }, childPath)
     , i     = 10
     , cbc   = 0
     , start = Date.now()
 
   while (i--) {
-    child(50, function () {
+    child(100, function () {
       if (++cbc == 10) {
-        var time = Date.now() - start
-        t.ok(time > 100 && time < 200, 'processed tasks concurrently (' + time + 'ms)')
+        let time = Date.now() - start
+        t.ok(time > 200 && time < 350, 'processed tasks concurrently (' + time + 'ms)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
@@ -257,13 +266,14 @@ tape('multiple concurrent calls', function (t) {
     })
   }
 })
+
 
 // call a method that will die with a probability of 0.5 but expect that
 // we'll get results for each of our calls anyway
 tape('durability', function (t) {
   t.plan(3)
 
-  var child = workerFarm({ maxConcurrentWorkers: 2 }, childPath, [ 'killable' ])
+  let child = workerFarm({ maxConcurrentWorkers: 2 }, childPath, [ 'killable' ])
     , ids   = []
     , pids  = []
     , i     = 10
@@ -284,11 +294,12 @@ tape('durability', function (t) {
   }
 })
 
+
 // a callback provided to .end() can and will be called (uses "simple, exports=function test" to create a child)
 tape('simple, end callback', function (t) {
   t.plan(4)
 
-  var child = workerFarm(childPath)
+  let child = workerFarm(childPath)
   child(0, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(pid < process.pid + 500, 'pid makes sense ' + pid + ' vs ' + process.pid)
@@ -300,10 +311,11 @@ tape('simple, end callback', function (t) {
   })
 })
 
+
 tape('call timeout test', function (t) {
   t.plan(3 + 3 + 4 + 4 + 4 + 3 + 1)
 
-  var child = workerFarm({ maxCallTime: 250, maxConcurrentWorkers: 1 }, childPath)
+  let child = workerFarm({ maxCallTime: 250, maxConcurrentWorkers: 1 }, childPath)
 
   // should come back ok
   child(50, function (err, pid, rnd) {
@@ -359,10 +371,11 @@ tape('call timeout test', function (t) {
   }, 400)
 })
 
+
 tape('test error passing', function (t) {
   t.plan(10)
 
-  var child = workerFarm(childPath, [ 'err' ])
+  let child = workerFarm(childPath, [ 'err' ])
   child.err('Error', 'this is an Error', function (err) {
     t.ok(err instanceof Error, 'is an Error object')
     t.equal('Error', err.type, 'correct type')
@@ -388,7 +401,7 @@ tape('test error passing', function (t) {
 tape('test maxConcurrentCalls', function (t) {
   t.plan(10)
 
-  var child = workerFarm({ maxConcurrentCalls: 5 }, childPath)
+  let child = workerFarm({ maxConcurrentCalls: 5 }, childPath)
 
   child(50, function (err) { t.notOk(err, 'no error') })
   child(50, function (err) { t.notOk(err, 'no error') })
@@ -409,12 +422,13 @@ tape('test maxConcurrentCalls', function (t) {
   })
 })
 
+
 // this test should not keep the process running! if the test process
 // doesn't die then the problem is here
 tape('test timeout kill', function (t) {
   t.plan(3)
 
-  var child = workerFarm({ maxCallTime: 250, maxConcurrentWorkers: 1 }, childPath, [ 'block' ])
+  let child = workerFarm({ maxCallTime: 250, maxConcurrentWorkers: 1 }, childPath, [ 'block' ])
   child.block(function (err) {
     t.ok(err, 'got an error')
     t.equal(err.type, 'TimeoutError', 'correct error type')
@@ -430,8 +444,8 @@ tape('test max retries after process terminate', function (t) {
   t.plan(7)
 
   // temporary file is used to store the number of retries among terminating workers
-  var filepath1 = '.retries1'
-  var child1 = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5}, childPath, [ 'stubborn' ])
+  let filepath1 = '.retries1'
+  let child1 = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5}, childPath, [ 'stubborn' ])
   child1.stubborn(filepath1, function (err, result) {
     t.notOk(err, 'no error')
     t.equal(result, 12, 'correct result')
@@ -442,8 +456,8 @@ tape('test max retries after process terminate', function (t) {
     t.ok(true, 'workerFarm ended')
   })
 
-  var filepath2 = '.retries2'
-  var child2 = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 3}, childPath, [ 'stubborn' ])
+  let filepath2 = '.retries2'
+  let child2 = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 3}, childPath, [ 'stubborn' ])
   child2.stubborn(filepath2, function (err, result) {
     t.ok(err, 'got an error')
     t.equal(err.type, 'ProcessTerminatedError', 'correct error type')
@@ -456,17 +470,21 @@ tape('test max retries after process terminate', function (t) {
   })
 })
 
-tape('ensure --debug not propagated to children', function (t) {
+
+tape('ensure --debug/--inspect not propagated to children', function (t) {
   t.plan(3)
 
-  var script = __dirname + '/debug.js'
-  var child = child_process.spawn('node', ['--debug=8881', script]);
-  var stdout = '';
+  let script   = __dirname + '/debug.js'
+    , debugArg = process.version.replace(/^v(\d+)\..*$/, '$1') >= 8 ? '--inspect' : '--debug=8881'
+    , child    = child_process.spawn(process.execPath, [ debugArg, script ])
+    , stdout   = ''
+
   child.stdout.on('data', function (data) {
     stdout += data.toString()
   })
+
   child.on('close', function (code) {
-    t.ok(code === 0, 'exited without error')
+    t.equal(code, 0, 'exited without error (' + code + ')')
     t.ok(stdout.indexOf('FINISHED') > -1, 'process finished')
     t.ok(stdout.indexOf('--debug') === -1, 'child does not receive debug flag')
   })

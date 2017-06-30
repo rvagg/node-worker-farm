@@ -18,11 +18,11 @@
     "url": "https://github.com/rvagg/node-worker-farm.git"
   },
   "dependencies": {
-    "errno": ">=0.1.1 <0.2.0-0",
-    "xtend": ">=4.0.0 <4.1.0-0"
+    "errno": "^0.1.4",
+    "xtend": "^4.0.1"
   },
   "devDependencies": {
-    "tape": ">=3.0.3 <3.1.0-0"
+    "tape": "^4.7.0"
   },
   "scripts": {
     "test": "node ./tests/"

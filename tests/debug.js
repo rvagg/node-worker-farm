@@ -1,5 +1,6 @@
-var workerFarm = require('../')
-  , workers    = workerFarm(require.resolve('./child'), ['args'])
+const workerFarm = require('../')
+    , workers    = workerFarm(require.resolve('./child'), ['args'])
+
 
 workers.args(function() {
   workerFarm.end(workers)

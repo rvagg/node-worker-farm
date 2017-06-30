@@ -1,4 +1,5 @@
-var fs = require('fs')
+const fs = require('fs')
+
 
 module.exports = function (timeout, callback) {
   callback = callback.bind(null, null, process.pid, Math.random(), timeout)
@@ -7,15 +8,18 @@ module.exports = function (timeout, callback) {
   callback()
 }
 
+
 module.exports.args = function (callback) {
   console.log(process.argv)
   console.log(process.execArgv)
   callback()
 }
 
+
 module.exports.run0 = function (callback) {
   module.exports(0, callback)
 }
+
 
 module.exports.killable = function (id, callback) {
   if (Math.random() < 0.5)
@@ -23,12 +27,13 @@ module.exports.killable = function (id, callback) {
   callback(null, id, process.pid)
 }
 
+
 module.exports.err = function (type, message, data, callback) {
   if (typeof data == 'function') {
     callback = data
     data = null
   } else {
-    var err = new Error(message)
+    let err = new Error(message)
     Object.keys(data).forEach(function(key) {
       err[key] = data[key]
     })
@@ -41,9 +46,11 @@ module.exports.err = function (type, message, data, callback) {
   callback(new Error(message))
 }
 
+
 module.exports.block = function () {
   while (true);
 }
+
 
 // use provided file path to save retries count among terminated workers
 module.exports.stubborn = function (path, callback) {
@@ -57,7 +64,7 @@ module.exports.stubborn = function (path, callback) {
     process.exit(-1)
   }
 
-  var retry = parseInt(fs.readFileSync(path, 'utf8'))
+  let retry = parseInt(fs.readFileSync(path, 'utf8'))
   if (Number.isNaN(retry))
     return callback(new Error('file contents is not a number'))
 
@@ -69,7 +76,8 @@ module.exports.stubborn = function (path, callback) {
   }
 }
 
-var started = Date.now()
+
+let started = Date.now()
 module.exports.uptime = function(callback) {
   callback(null, Date.now() - started)
 }

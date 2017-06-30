@@ -9,7 +9,7 @@
  */
 
 module.exports = function (points, callback) {
-  var inside = 0
+  let inside = 0
     , i = points
 
   while (i--)

@@ -1,3 +1,5 @@
+'use strict'
+
 const tape          = require('tape')
     , child_process = require('child_process')
     , workerFarm    = require('../')

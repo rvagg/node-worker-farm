@@ -1,3 +1,5 @@
+'use strict'
+
 /* A simple π estimation function using a Monte Carlo method
  * For 0 to `points`, take 2 random numbers < 1, square and add them to
  * find the area under that point in a 1x1 square. If that area is <= 1

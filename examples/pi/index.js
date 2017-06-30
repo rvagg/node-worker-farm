@@ -1,3 +1,5 @@
+'use strict'
+
 const CHILDREN         = 500
     , POINTS_PER_CHILD = 1000000
     , FARM_OPTIONS     = {

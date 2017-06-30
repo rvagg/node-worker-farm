@@ -1,3 +1,5 @@
+'use strict'
+
 const workerFarm = require('../')
     , workers    = workerFarm(require.resolve('./child'), ['args'])
 

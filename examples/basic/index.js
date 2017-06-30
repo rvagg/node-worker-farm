@@ -1,3 +1,5 @@
+'use strict'
+
 let workerFarm = require('../../')
   , workers    = workerFarm(require.resolve('./child'))
   , ret        = 0

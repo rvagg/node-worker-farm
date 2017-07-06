@@ -491,3 +491,21 @@ tape('ensure --debug/--inspect not propagated to children', function (t) {
     t.ok(stdout.indexOf('--debug') === -1, 'child does not receive debug flag')
   })
 })
+
+
+tape('test fork options', function (t) {
+  t.plan(3)
+  let env = process.env
+  env.foo = 'bar'
+  let options = { forkOptions: { env } }
+
+  let child = workerFarm(options, childPath, [ 'env' ])
+  child.env(function (err, result) {
+    t.notOk(err, 'no error')
+    t.equal(result.foo, env.foo, 'env var passed to child correctly')
+  })
+
+  workerFarm.end(child, function () {
+    t.ok(true, 'workerFarm ended')
+  })
+})

@@ -97,6 +97,22 @@ Listing the available methods will instruct Worker Farm what API to provide you 
 
 **It is assumed that each function you call on your child module will take a `callback` function as the last argument.**
 
+##### broadcast call
+
+You can call some function in all workers. To do this you should specify method via object with `broadcast` property set to true
+
+```js
+var workers = workerFarm(require.resolve('./mod'), [
+  {name: 'init', broadcast: true}, // broadcast method
+  {name: 'doSomething'}, // plain method
+  'doOtherThing' // plain method
+})
+```
+
+Broadcast method will be called in all child processes. Its callback will be called with the first occured error if any or with an array of results.
+
+**Note that any broadcast method will be called in all children started before the moment of call but not for those started after. So if you want to be sure that broadcast method will be called in all children you should enable `autoStart` option
+
 #### `options`
 
 If you don't provide an `options` object then the following defaults will be used:

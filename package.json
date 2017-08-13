@@ -27,5 +27,6 @@
   "scripts": {
     "test": "node ./tests/"
   },
+  "types": "./index.d.ts",
   "license": "MIT"
 }

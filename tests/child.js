@@ -79,6 +79,11 @@ module.exports.stubborn = function (path, callback) {
 }
 
 
+module.exports.env = function (callback) {
+  callback(null, process.env)
+}
+
+
 let started = Date.now()
 module.exports.uptime = function(callback) {
   callback(null, Date.now() - started)

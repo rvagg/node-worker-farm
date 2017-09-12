@@ -77,7 +77,10 @@ Worker Farm allows me to spin up multiple JVMs to be controlled by Node, and hav
 
 ## API
 
-Worker Farm exports a main function and an `end()` method. The main function sets up a "farm" of coordinated child-process workers and it can be used to instantiate multiple farms, all operating independently.
+Worker Farm exports a main function and some helper methods:
+  * The main function sets up a "farm" of coordinated child-process workers and it can be used to instantiate multiple farms, all operating independently.
+  * The `end()` method allows to finalize the execution of all workers of a farm.
+  * The `stdout()` and `stderr()` methods return each a stream where all the `stdout` and `stderr` from other workers are respectively piped.
 
 ### workerFarm([options, ]pathToModule[, exportedMethods])
 

@@ -270,6 +270,30 @@ tape('multiple concurrent calls', function (t) {
 })
 
 
+tape.only('global stdout and stderr are exposed', function (t) {
+  t.plan(4)
+
+  let child  = workerFarm({ maxConcurrentWorkers: 2, maxConcurrentCallsPerWorker: 1 }, childPath, [ 'writeToStdout' ])
+    , buffer = ''
+
+  workerFarm.stdout(child).on('data', function (data) {
+    buffer += data
+
+    // if both "boo" and "bar" are present in the buffer (in whatever order)...
+    if ((buffer.match(/foo|bar/g) || []).length === 2) {
+      t.ok(true, 'both workers output to stdout')
+    }
+  })
+
+  child.writeToStdout('foo', function () { t.ok(true, 'called worker #1') })
+  child.writeToStdout('bar', function () { t.ok(true, 'called worker #2') })
+
+  workerFarm.end(child, function() {
+    t.pass('woerkFarm ended')
+  })
+})
+
+
 // call a method that will die with a probability of 0.5 but expect that
 // we'll get results for each of our calls anyway
 tape('durability', function (t) {

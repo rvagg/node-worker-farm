@@ -49,6 +49,12 @@ module.exports.err = function (type, message, data, callback) {
 }
 
 
+module.exports.writeToStdout = function (str, callback) {
+  process.stdout.write(str);
+  callback();
+}
+
+
 module.exports.block = function () {
   while (true);
 }

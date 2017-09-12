@@ -5,6 +5,7 @@ const tape          = require('tape')
     , workerFarm    = require('../')
     , childPath     = require.resolve('./child')
     , fs            = require('fs')
+    , os            = require('os')
 
 function uniq (ar) {
   let a = [], i, j
@@ -468,6 +469,28 @@ tape('test max retries after process terminate', function (t) {
 
   workerFarm.end(child2, function () {
     fs.unlinkSync(filepath2)
+    t.ok(true, 'workerFarm ended')
+  })
+})
+
+
+tape('custom arguments can be passed to "fork"', function (t) {
+  t.plan(3)
+
+  // allocate a real, valid path, in any OS
+  let cwd = fs.realpathSync(os.tmpdir())
+    , workerOptions = {
+        cwd      : cwd
+      , execArgv : ['--no-warnings']
+    }
+    , child = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5, workerOptions: workerOptions}, childPath, ['args'])
+
+  child.args(function (err, result) {
+    t.equal(result.execArgv[0], '--no-warnings', 'flags passed (overridden default)')
+    t.equal(result.cwd, cwd, 'correct cwd folder')
+  })
+
+  workerFarm.end(child, function () {
     t.ok(true, 'workerFarm ended')
   })
 })

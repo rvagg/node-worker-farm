@@ -126,17 +126,18 @@ tape('many workers', function (t) {
 
 
 tape('auto start workers', function (t) {
-  t.plan(4)
-
   let child = workerFarm({ maxConcurrentWorkers: 3, autoStart: true }, childPath, ['uptime'])
     , pids  = []
-    , i     = 3
-    , delay = 150
+    , count = 5
+    , i     = count
+    , delay = 250
+
+  t.plan(count + 1)
 
   setTimeout(function() {
     while (i--)
       child.uptime(function (err, uptime) {
-        t.ok(uptime > 10, 'child has been up before the request')
+        t.ok(uptime > 10, 'child has been up before the request (' + uptime + 'ms)')
       })
 
     workerFarm.end(child, function () {
@@ -151,19 +152,25 @@ tape('auto start workers', function (t) {
 tape('single call per worker', function (t) {
   t.plan(2)
 
-  let child = workerFarm({ maxConcurrentWorkers: 1, maxCallsPerWorker: 1 }, childPath)
+  let child = workerFarm({
+          maxConcurrentWorkers: 1
+        , maxConcurrentCallsPerWorker: Infinity
+        , maxCallsPerWorker: 1
+        , autoStart: true
+      }, childPath)
     , pids  = []
-    , i     = 10
+    , count = 25
+    , i     = count
 
   while (i--) {
     child(0, function (err, pid) {
       pids.push(pid)
-      if (pids.length == 10) {
-        t.equal(10, uniq(pids).length, 'one process for each call (by pid)')
+      if (pids.length == count) {
+        t.equal(count, uniq(pids).length, 'one process for each call (by pid)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
-      } else if (pids.length > 10)
+      } else if (pids.length > count)
         t.fail('too many callbacks!')
     })
   }
@@ -175,19 +182,25 @@ tape('single call per worker', function (t) {
 tape('two calls per worker', function (t) {
   t.plan(2)
 
-  let child = workerFarm({ maxConcurrentWorkers: 1, maxCallsPerWorker: 2 }, childPath)
+  let child = workerFarm({
+          maxConcurrentWorkers: 1
+        , maxConcurrentCallsPerWorker: Infinity
+        , maxCallsPerWorker: 2
+        , autoStart: true
+      }, childPath)
     , pids  = []
-    , i     = 10
+    , count = 20
+    , i     = count
 
   while (i--) {
     child(0, function (err, pid) {
       pids.push(pid)
-      if (pids.length == 10) {
-        t.equal(5, uniq(pids).length, 'one process for each call (by pid)')
+      if (pids.length == count) {
+        t.equal(count / 2, uniq(pids).length, 'one process for each call (by pid)')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
-      } else if (pids.length > 10)
+      } else if (pids.length > count)
         t.fail('too many callbacks!')
     })
   }
@@ -198,23 +211,34 @@ tape('two calls per worker', function (t) {
 tape('many concurrent calls', function (t) {
   t.plan(2)
 
-  let child = workerFarm({ maxConcurrentWorkers: 1 }, childPath)
-    , i     = 10
+  let child = workerFarm({
+          maxConcurrentWorkers: 1
+        , maxConcurrentCallsPerWorker: Infinity
+        , maxCallsPerWorker: Infinity
+        , autoStart: true
+      }, childPath)
+    , defer = 200
+    , count = 200
+    , i     = count
     , cbc   = 0
-    , start = Date.now()
 
-  while (i--) {
-    child(100, function () {
-      if (++cbc == 10) {
-        let time = Date.now() - start
-        t.ok(time > 100 && time < 250, 'processed tasks concurrently (' + time + 'ms)')
-        workerFarm.end(child, function () {
-          t.ok(true, 'workerFarm ended')
-        })
-      } else if (cbc > 10)
-        t.fail('too many callbacks!')
-    })
-  }
+  setTimeout(function () {
+    let start = Date.now()
+
+    while (i--) {
+      child(defer, function () {
+        if (++cbc == count) {
+          let time = Date.now() - start
+          // upper-limit not tied to `count` at all
+          t.ok(time > defer && time < (defer * 2.5), 'processed tasks concurrently (' + time + 'ms)')
+          workerFarm.end(child, function () {
+            t.ok(true, 'workerFarm ended')
+          })
+        } else if (cbc > count)
+          t.fail('too many callbacks!')
+      })
+    }
+  }, 250)
 })
 
 
@@ -223,26 +247,35 @@ tape('many concurrent calls', function (t) {
 tape('single concurrent call', function (t) {
   t.plan(2)
 
-  let child = workerFarm(
-          { maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 1 }
-        , childPath
-      )
-    , i     = 10
+  let child = workerFarm({
+          maxConcurrentWorkers: 1
+        , maxConcurrentCallsPerWorker: 1
+        , maxCallsPerWorker: Infinity
+        , autoStart: true
+      }, childPath)
+    , defer = 20
+    , count = 100
+    , i     = count
     , cbc   = 0
-    , start = Date.now()
 
-  while (i--) {
-    child(20, function () {
-      if (++cbc == 10) {
-        let time = Date.now() - start
-        t.ok(time > 200 && time < 400, 'processed tasks sequentially (' + time + 'ms)')
-        workerFarm.end(child, function () {
-          t.ok(true, 'workerFarm ended')
-        })
-      } else if (cbc > 10)
-        t.fail('too many callbacks!')
-    })
-  }
+  setTimeout(function () {
+    let start = Date.now()
+
+    while (i--) {
+      child(defer, function () {
+        if (++cbc == count) {
+          let time = Date.now() - start
+          // upper-limit tied closely to `count`, 1.2 is generous but accounts for all the timers
+          // coming back at the same time and the IPC overhead
+          t.ok(time > (defer * count) && time < (defer * count * 1.2), 'processed tasks sequentially (' + time + 'ms)')
+          workerFarm.end(child, function () {
+            t.ok(true, 'workerFarm ended')
+          })
+        } else if (cbc > count)
+          t.fail('too many callbacks!')
+      })
+    }
+  }, 250)
 })
 
 
@@ -250,23 +283,37 @@ tape('single concurrent call', function (t) {
 tape('multiple concurrent calls', function (t) {
   t.plan(2)
 
-  let child = workerFarm({ maxConcurrentWorkers: 1, maxConcurrentCallsPerWorker: 5 }, childPath)
-    , i     = 10
+  let callsPerWorker = 5
+    , child = workerFarm({
+          maxConcurrentWorkers: 1
+        , maxConcurrentCallsPerWorker: callsPerWorker
+        , maxCallsPerWorker: Infinity
+        , autoStart: true
+      }, childPath)
+    , defer = 100
+    , count = 100
+    , i     = count
     , cbc   = 0
-    , start = Date.now()
 
-  while (i--) {
-    child(100, function () {
-      if (++cbc == 10) {
-        let time = Date.now() - start
-        t.ok(time > 200 && time < 350, 'processed tasks concurrently (' + time + 'ms)')
-        workerFarm.end(child, function () {
-          t.ok(true, 'workerFarm ended')
-        })
-      } else if (cbc > 10)
-        t.fail('too many callbacks!')
-    })
-  }
+  setTimeout(function () {
+    let start = Date.now()
+
+    while (i--) {
+      child(defer, function () {
+        if (++cbc == count) {
+          let time = Date.now() - start
+          // (defer * (count / callsPerWorker + 1)) - if precise it'd be count/callsPerWorker
+          // but accounting for IPC and other overhead, we need to give it a bit of extra time,
+          // hence the +1
+          t.ok(time > (defer * 1.5) && time < (defer * (count / callsPerWorker + 1)), 'processed tasks concurrently (' + time + 'ms)')
+          workerFarm.end(child, function () {
+            t.ok(true, 'workerFarm ended')
+          })
+        } else if (cbc > count)
+          t.fail('too many callbacks!')
+      })
+    }
+  }, 250)
 })
 
 
@@ -278,19 +325,20 @@ tape('durability', function (t) {
   let child = workerFarm({ maxConcurrentWorkers: 2 }, childPath, [ 'killable' ])
     , ids   = []
     , pids  = []
-    , i     = 10
+    , count = 10
+    , i     = count
 
   while (i--) {
     child.killable(i, function (err, id, pid) {
       ids.push(id)
       pids.push(pid)
-      if (ids.length == 10) {
+      if (ids.length == count) {
         t.ok(uniq(pids).length > 2, 'processed by many (' + uniq(pids).length + ') workers, but got there in the end!')
-        t.ok(uniq(ids).length == 10, 'received a single result for each unique call')
+        t.ok(uniq(ids).length == count, 'received a single result for each unique call')
         workerFarm.end(child, function () {
           t.ok(true, 'workerFarm ended')
         })
-      } else if (ids.length > 10)
+      } else if (ids.length > count)
         t.fail('too many callbacks!')
     })
   }

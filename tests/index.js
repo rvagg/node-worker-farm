@@ -51,6 +51,22 @@ tape('simple, exports.fn test', function (t) {
 })
 
 
+tape('on child', function (t) {
+    t.plan(2)
+
+    let child = workerFarm({ onChild: function(subprocess) { childPid = subprocess.pid } }, childPath)
+      , childPid = null;
+
+    child(0, function(err, pid) {
+      t.equal(childPid, pid)
+    })
+
+    workerFarm.end(child, function () {
+      t.ok(true, 'workerFarm ended')
+    })
+})
+
+
 // use the returned pids to check that we're using a single child process
 // when maxConcurrentWorkers = 1
 tape('single worker', function (t) {

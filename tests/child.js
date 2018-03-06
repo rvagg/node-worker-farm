@@ -1,6 +1,7 @@
 'use strict'
 
 const fs = require('fs')
+const started = Date.now()
 
 
 module.exports = function (timeout, callback) {
@@ -81,7 +82,6 @@ module.exports.stubborn = function (path, callback) {
 }
 
 
-let started = Date.now()
-module.exports.uptime = function(callback) {
+module.exports.uptime = function (callback) {
   callback(null, Date.now() - started)
 }

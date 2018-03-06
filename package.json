@@ -1,7 +1,7 @@
 {
   "name": "worker-farm",
   "description": "Distribute processing tasks to child processes with an über-simple API and baked-in durability & custom concurrency options.",
-  "version": "1.5.0",
+  "version": "1.5.4",
   "homepage": "https://github.com/rvagg/node-worker-farm",
   "authors": [
     "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
@@ -18,11 +18,11 @@
     "url": "https://github.com/rvagg/node-worker-farm.git"
   },
   "dependencies": {
-    "errno": "^0.1.4",
-    "xtend": "^4.0.1"
+    "errno": "~0.1.7",
+    "xtend": "~4.0.1"
   },
   "devDependencies": {
-    "tape": "^4.7.0"
+    "tape": "~4.9.0"
   },
   "scripts": {
     "test": "node ./tests/"

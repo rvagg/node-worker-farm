@@ -24,7 +24,7 @@ tape('simple, exports=function test', function (t) {
   let child = workerFarm(childPath)
   child(0, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense')
-    t.ok(pid < process.pid + 500, 'pid makes sense')
+    t.ok(pid < process.pid + 750, 'pid makes sense')
     t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
@@ -41,7 +41,7 @@ tape('simple, exports.fn test', function (t) {
   let child = workerFarm(childPath, [ 'run0' ])
   child.run0(function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense')
-    t.ok(pid < process.pid + 500, 'pid makes sense')
+    t.ok(pid < process.pid + 750, 'pid makes sense')
     t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
@@ -353,7 +353,7 @@ tape('simple, end callback', function (t) {
   let child = workerFarm(childPath)
   child(0, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(pid < process.pid + 500, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
@@ -371,14 +371,14 @@ tape('call timeout test', function (t) {
   // should come back ok
   child(50, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(pid < process.pid + 500, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
   })
 
   // should come back ok
   child(50, function (err, pid, rnd) {
     t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(pid < process.pid + 500, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
   })
 
@@ -413,7 +413,7 @@ tape('call timeout test', function (t) {
   setTimeout(function () {
     child(50, function (err, pid, rnd) {
       t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-      t.ok(pid < process.pid + 500, 'pid makes sense ' + pid + ' vs ' + process.pid)
+      t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
       t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
     })
     workerFarm.end(child, function () {

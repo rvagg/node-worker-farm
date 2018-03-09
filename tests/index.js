@@ -529,12 +529,12 @@ tape('custom arguments can be passed to "fork"', function (t) {
   let cwd = fs.realpathSync(os.tmpdir())
     , workerOptions = {
         cwd      : cwd
-      , execArgv : ['--no-warnings']
+      , execArgv : ['--expose-gc']
     }
     , child = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5, workerOptions: workerOptions}, childPath, ['args'])
 
   child.args(function (err, result) {
-    t.equal(result.execArgv[0], '--no-warnings', 'flags passed (overridden default)')
+    t.equal(result.execArgv[0], '--expose-gc', 'flags passed (overridden default)')
     t.equal(result.cwd, cwd, 'correct cwd folder')
   })
 

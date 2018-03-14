@@ -35,7 +35,7 @@ interface WorkerFarm {
   (options: FarmOptions, name: string): Workers;
   (options: FarmOptions, name: string, exportedMethods: string[]): Workers;
 
-  end: (workers: Workers) => void;
+  end: (workers: Workers, callback?: Function) => void;
 }
 
 declare module "worker-farm" {

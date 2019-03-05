@@ -24,7 +24,7 @@
     "tape": "~4.9.0"
   },
   "scripts": {
-    "test": "node ./tests/"
+    "test": "node ./tests/run"
   },
   "types": "./index.d.ts",
   "license": "MIT"

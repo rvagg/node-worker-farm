@@ -1,8 +1,8 @@
 'use strict'
+module.exports = function(workerFarm) {
 
 const tape          = require('tape')
     , child_process = require('child_process')
-    , workerFarm    = require('../')
     , childPath     = require.resolve('./child')
     , fs            = require('fs')
     , os            = require('os')
@@ -562,3 +562,5 @@ tape('ensure --debug/--inspect not propagated to children', function (t) {
     t.ok(stdout.indexOf('--debug') === -1, 'child does not receive debug flag')
   })
 })
+
+}

@@ -21,6 +21,7 @@ declare namespace Farm {
   export function end(workers: Workers): void;
 
   export interface Workers {
+    [x: string]: Workers,
     (callback: WorkerCallback): void;
     (arg1: any, callback: WorkerCallback): void;
     (arg1: any, arg2: any, callback: WorkerCallback): void;

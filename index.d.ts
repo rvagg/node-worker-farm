@@ -45,5 +45,5 @@ type WorkerCallback3 = (arg1: any, arg2: any, arg3: any) => void;
 type WorkerCallback4 = (arg1: any, arg2: any, arg3: any, arg4: any) => void;
 
 declare namespace Farm {
-  export function end(workers: Workers): void;
+  export function end(workers: Workers, callback?: Function): void;
 }

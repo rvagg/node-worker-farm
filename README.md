@@ -147,4 +147,4 @@ Once you end a farm, it won't handle any more calls, so don't even try!
 
 ## License
 
-Worker Farm is Copyright (c) 2014 Rod Vagg [@rvagg](https://twitter.com/rvagg) and licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE.md file for more details.
+Worker Farm is Copyright (c) Rod Vagg and licensed under the MIT license. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE.md file for more details.

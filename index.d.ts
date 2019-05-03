@@ -12,7 +12,6 @@ declare function Farm(
 ): Workers;
 
 interface Workers {
-  [x: string]: Workers,
   (callback: WorkerCallback): void;
   (arg1: any, callback: WorkerCallback): void;
   (arg1: any, arg2: any, callback: WorkerCallback): void;

@@ -21,7 +21,7 @@
     "errno": "~0.1.7"
   },
   "devDependencies": {
-    "tape": "~4.9.0"
+    "tape": "~4.10.1"
   },
   "scripts": {
     "test": "node ./tests/"

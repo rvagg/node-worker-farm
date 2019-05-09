@@ -1,4 +1,8 @@
 const test = require('.')
 const workerFarm = require('..')
+
 test(workerFarm)
-test(workerFarm.threaded)
+try {
+	require('worker_threads');
+	test(workerFarm.threaded, true)
+} catch (e) {}

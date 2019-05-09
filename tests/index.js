@@ -592,12 +592,11 @@ tape('pass a transferList when running in threaded mode', function (t) {
   let two = new Uint8Array([3,4,5])
 
   child.transfer(one, two, function(err, result) {
+    t.equal(one.byteLength, 0, 'Float64Array has been transferred')
+    t.equal(two.byteLength, 0, 'Uint8Array has been transferred')
     t.ok(result instanceof Uint32Array, 'result should be a Uint32Array')
     t.equal(result[0], 15, 'sum should be 15')
   }, [one.buffer, two.buffer])
-
-  t.equal(one.byteLength, 0, 'Float64Array has been transferred')
-  t.equal(two.byteLength, 0, 'Uint8Array has been transferred')
 
   workerFarm.end(child, function() {
     t.ok(true, 'workerFarm ended')

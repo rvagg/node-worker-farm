@@ -3,9 +3,19 @@
 const fs = require('fs')
 const started = Date.now()
 
+// Check if we're running as a worker thread or child process. It doesn't make 
+// much sense to send along the process id for worker threads because it will 
+// be the same as the on in the main thread.
+let pid = process.pid
+try {
+  const {threadId, isMainThread} = require('worker_threads')
+  if (!isMainThread) {
+    pid = threadId
+  }
+} catch (e) {}
 
 module.exports = function (timeout, callback) {
-  callback = callback.bind(null, null, process.pid, Math.random(), timeout)
+  callback = callback.bind(null, null, [pid, Math.random(), timeout])
   if (timeout)
     return setTimeout(callback, timeout)
   callback()
@@ -29,7 +39,7 @@ module.exports.run0 = function (callback) {
 module.exports.killable = function (id, callback) {
   if (Math.random() < 0.5)
     return process.exit(-1)
-  callback(null, id, process.pid)
+  callback(null, [id, pid])
 }
 
 
@@ -84,4 +94,20 @@ module.exports.stubborn = function (path, callback) {
 
 module.exports.uptime = function (callback) {
   callback(null, Date.now() - started)
+}
+
+module.exports.transfer = function (one, two, callback) {
+  let sum = 0
+  for (let buffer of [one, two]) {
+    for (let value of buffer) sum += value
+  }
+  let arr = new Uint32Array([sum])
+  callback(null, arr, [arr.buffer])
+}
+
+module.exports.shared = function (buffer, callback) {
+  setTimeout(function() {
+    buffer[0] = Math.E
+    callback(null)
+  }, 15)
 }

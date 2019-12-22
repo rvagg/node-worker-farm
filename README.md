@@ -3,7 +3,7 @@
 [![NPM](https://nodei.co/npm/worker-farm.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/worker-farm/)
 
 
-Distribute processing tasks to child processes with an über-simple API and baked-in durability & custom concurrency options. *Available in npm as <strong>worker-farm</strong>*.
+Distribute processing tasks to child processes or worker threads with an über-simple API and baked-in durability & custom concurrency options. *Available in npm as <strong>worker-farm</strong>*.
 
 ## Example
 
@@ -48,6 +48,58 @@ We'll get an output something like the following:
 
 This example is contained in the *[examples/basic](https://github.com/rvagg/node-worker-farm/tree/master/examples/basic/)* directory.
 
+### Using worker_threads
+
+Since version 2.0.0 you can also make use of node's [worker_threads](https://nodejs.org/api/worker_threads.html) module.
+This requires you to use the module with node 12.x or higher, or 10.5 or higher with the ```--experimental-worker``` flag.
+If ```worker_threads``` is not available, the module will fall back to the default implementation using child_processes, but a warning will be emited.
+
+Given a file, *child.js*:
+
+```js
+'use strict'
+const {threadId} = require('worker_threads')
+
+module.exports = function (inp, callback) {
+	callback(null, inp + ' BAR (' + [process.pid, threadId].join(':') + ')')
+}
+```
+
+And a main file:
+
+```js
+'use strict'
+
+let workerFarm = require('../../')
+  , workers    = workerFarm.threaded(require.resolve('./child'))
+  , ret		   = 0
+
+for (let i = 0; i < 10; i++) {
+  workers('#' + i + ' FOO', function(err, outp) {
+    console.log(outp)
+    if (++ret == 10) 
+      workerFarm.end(workers)
+  })
+}
+```
+
+We'll get an output something like the following:
+
+```
+#3 FOO BAR (22236:4)
+#5 FOO BAR (22236:6)
+#1 FOO BAR (22236:2)
+#9 FOO BAR (22236:2)
+#4 FOO BAR (22236:5)
+#7 FOO BAR (22236:8)
+#2 FOO BAR (22236:3)
+#0 FOO BAR (22236:1)
+#8 FOO BAR (22236:1)
+#6 FOO BAR (22236:7)
+```
+
+This example is contained in the *[examples/threaded](https://github.com/rvagg/node-worker-farm/tree/master/examples/threaded/)* directory.
+
 ### Example #1: Estimating π using child workers
 
 You will also find a more complex example in *[examples/pi](https://github.com/rvagg/node-worker-farm/tree/master/examples/pi/)* that estimates the value of **π** by using a Monte Carlo *area-under-the-curve* method and compares the speed of doing it all in-process vs using child workers to complete separate portions.
@@ -62,6 +114,52 @@ Doing it the fast (multi-process) way...
 π ≈ 3.1416233600000036  (0.00003070641021052367 away from actual!)
 took 1985 milliseconds
 ```
+
+### Example #2: Using transferLists with worker threads
+
+The [benefit](https://nodejs.org/docs/latest-v10.x/api/worker_threads.html#worker_threads_worker_threads) of using worker threads compared to child processes is that we can make use of transferLists and SharedArrayBuffers to efficiently pass data around.
+
+When passing data from a child to the main thread, you can specify a transferList as third argument to the callback like
+```js
+module.exports = function(callback) {
+  let result = getLargeDataStructure()
+  let transferList = getTransferListForResult(result)
+  callback(null, result, transferList)
+}
+```
+
+When passing data to a child, you can specify a transferList after the callback like
+```js
+let workers = workerFarm(require.resolve('path/to/child'))
+workers(all, your, args, function(err, result) {
+   // Do something with the result
+}, transferList)
+```
+
+Beware that **after** transferring, the data is no longer available on the sending side.
+However, because we're using a queue it might be possible that after calling a worker, data may still be available.
+Consider
+```js
+// Let's run a task very often, much more than we have child threads.
+for (let i = 0; i < 100; i++) {
+  let arr = new Uint8Array(1024);
+  workers(function(err, result) {
+    
+  }, [arr.buffer])
+  
+  // What will be the length of arr here? If the array was transferred 
+  // immediately to the child, arr.length === 0, but if the call is still in 
+  // the queue - arr will still be available because it hasn't been 
+  // transferred yet! In that case arr.length === 1024!
+  let schrodingersCat = {
+    dead: arr.length === 0
+  }
+  
+}
+```
+This behavior can hence lead to subtle bugs and therefore **YOU SHOULD NEVER** use an ArrayBuffer anymore after you've specified it in a transferList.
+
+Have a look at the *[examples/transfer](https://github.com/rvagg/node-worker-farm/tree/master/examples/transfer/)* directory for an example that shows that transferLists can pass data around more efficiently.
 
 ## Durability
 
@@ -82,6 +180,12 @@ Worker Farm exports a main function and an `end()` method. The main function set
 ### workerFarm([options, ]pathToModule[, exportedMethods])
 
 In its most basic form, you call `workerFarm()` with the path to a module file to be invoked by the child process. You should use an **absolute path** to the module file, the best way to obtain the path is with `require.resolve('./path/to/module')`, this function can be used in exactly the same way as `require('./path/to/module')` but it returns an absolute path.
+
+### workerFarm.threaded([options, ]pathToModule[, exportedMethods])
+
+Using this method will try to use node's `worker_threads` module if it's available.
+If it's not available, this will be detected and the module will default to the default implementation with child processes, displaying a warning that the `worker_threads` module is not available.
+The api of the method is exactly the same as the `workerFarm()` function.
 
 #### `exportedMethods`
 
@@ -115,7 +219,7 @@ If you don't provide an `options` object then the following defaults will be use
 }
 ```
 
-  * **<code>workerOptions</code>** allows you to customize all the parameters passed to child nodes. This object supports [all possible options of `child_process.fork`](https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options). The default options passed are the parent `execArgv`, `cwd` and `env`. Any (or all) of them can be overridden, and others can be added as well.
+  * **<code>workerOptions</code>** allows you to customize all the parameters passed to child nodes. This object supports [all possible options of `child_process.fork`](https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options) or [all possible options of `Worker`](https://nodejs.org/api/worker_threads.html#worker_threads_new_worker_filename_options) when using the threaded implementation. The default options passed are the parent `execArgv`, `cwd` and `env`. Any (or all) of them can be overridden, and others can be added as well.
 
   * **<code>maxCallsPerWorker</code>** allows you to control the lifespan of your child processes. A positive number will indicate that you only want each child to accept that many calls before it is terminated. This may be useful if you need to control memory leaks or similar in child processes.
 
@@ -131,7 +235,7 @@ If you don't provide an `options` object then the following defaults will be use
 
   * **<code>autoStart</code>** when set to `true` will start the workers as early as possible. Use this when your workers have to do expensive initialization. That way they'll be ready when the first request comes through.
 
-  * **<code>onChild</code>** when new child process starts this callback will be called with subprocess object as an argument. Use this when you need to add some custom communication with child processes.
+  * **<code>onChild</code>** when new child process (or worker when using threads) starts this callback will be called with subprocess (or worker) object as an argument. Use this when you need to add some custom communication with children.
 
 ### workerFarm.end(farm)
 
@@ -140,6 +244,25 @@ Child processes stay alive waiting for jobs indefinitely and your farm manager w
 Any calls that are queued and not yet being handled by a child process will be discarded. `end()` only waits for those currently in progress.
 
 Once you end a farm, it won't handle any more calls, so don't even try!
+
+## Breaking changes in v2
+
+Although not explicitly documented, in v1 it was possible to pass multiple arguments to the callback
+```js
+// BEWARE! CODE BELOW NO LONGER WORKS IN v2!
+
+// child.js
+module.exports = function(callback) {
+  callback(null, 'result', 'another result')
+}
+
+// parent.js
+workers(function(err, one, two) {
+  console.log(one, two) // Logs 'result' 'another result'
+})
+```
+This is no longer possible in v2 because the third argument is considered to be a transferList.
+If you're using the default implementation that uses child processes, the third (and fourth, and fifth, ...) argument specified to the callback will simply be ignored.
 
 ## Related
 

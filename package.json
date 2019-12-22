@@ -1,7 +1,7 @@
 {
   "name": "worker-farm",
   "description": "Distribute processing tasks to child processes with an über-simple API and baked-in durability & custom concurrency options.",
-  "version": "1.7.0",
+  "version": "2.0.0",
   "homepage": "https://github.com/rvagg/node-worker-farm",
   "authors": [
     "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
@@ -24,7 +24,7 @@
     "tape": "~4.10.1"
   },
   "scripts": {
-    "test": "node ./tests/"
+    "test": "node ./tests/run"
   },
   "types": "./index.d.ts",
   "license": "MIT"

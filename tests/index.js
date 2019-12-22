@@ -1,8 +1,8 @@
 'use strict'
+module.exports = function(workerFarm, threaded) {
 
 const tape          = require('tape')
     , child_process = require('child_process')
-    , workerFarm    = require('../')
     , childPath     = require.resolve('./child')
     , fs            = require('fs')
     , os            = require('os')
@@ -19,12 +19,12 @@ function uniq (ar) {
 
 // a child where module.exports = function ...
 tape('simple, exports=function test', function (t) {
-  t.plan(4)
+  t.plan(2)
 
   let child = workerFarm(childPath)
-  child(0, function (err, pid, rnd) {
-    t.ok(pid > process.pid, 'pid makes sense')
-    t.ok(pid < process.pid + 750, 'pid makes sense')
+  child(0, function (err, [pid, rnd]) {
+    // t.ok(pid > process.pid, 'pid makes sense')
+    // t.ok(pid < process.pid + 750, 'pid makes sense')
     t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
@@ -36,12 +36,12 @@ tape('simple, exports=function test', function (t) {
 
 // a child where we have module.exports.fn = function ...
 tape('simple, exports.fn test', function (t) {
-  t.plan(4)
+  t.plan(2)
 
   let child = workerFarm(childPath, [ 'run0' ])
-  child.run0(function (err, pid, rnd) {
-    t.ok(pid > process.pid, 'pid makes sense')
-    t.ok(pid < process.pid + 750, 'pid makes sense')
+  child.run0(function (err, [pid, rnd]) {
+    // t.ok(pid > process.pid, 'pid makes sense')
+    // t.ok(pid < process.pid + 750, 'pid makes sense')
     t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
@@ -52,18 +52,42 @@ tape('simple, exports.fn test', function (t) {
 
 
 tape('on child', function (t) {
+
+  if (threaded) {
+
+    t.plan(2)
+    let child = workerFarm({
+      onChild: function(worker) {
+        threadId = worker.threadId
+      }
+    }, childPath)
+    let threadId = null
+
+    child(0, function(err, [tid]) {
+      t.equal(threadId, tid)
+    })
+
+    workerFarm.end(child, function() {
+      t.ok(true, 'workerFarm ended')
+    })
+
+  }
+  else {
+
     t.plan(2)
 
     let child = workerFarm({ onChild: function(subprocess) { childPid = subprocess.pid } }, childPath)
       , childPid = null;
 
-    child(0, function(err, pid) {
+    child(0, function(err, [pid]) {
       t.equal(childPid, pid)
     })
 
     workerFarm.end(child, function () {
       t.ok(true, 'workerFarm ended')
     })
+
+  }
 })
 
 
@@ -77,7 +101,7 @@ tape('single worker', function (t) {
     , i     = 10
 
   while (i--) {
-    child(0, function (err, pid) {
+    child(0, function (err, [pid]) {
       pids.push(pid)
       if (pids.length == 10) {
         t.equal(1, uniq(pids).length, 'only a single process (by pid)')
@@ -102,7 +126,7 @@ tape('two workers', function (t) {
     , i     = 10
 
   while (i--) {
-    child(0, function (err, pid) {
+    child(0, function (err, [pid]) {
       pids.push(pid)
       if (pids.length == 10) {
         t.equal(2, uniq(pids).length, 'only two child processes (by pid)')
@@ -127,7 +151,7 @@ tape('many workers', function (t) {
     , i     = 10
 
   while (i--) {
-    child(1, function (err, pid) {
+    child(1, function (err, [pid]) {
       pids.push(pid)
       if (pids.length == 10) {
         t.equal(10, uniq(pids).length, 'pids are all the same (by pid)')
@@ -180,7 +204,7 @@ tape('single call per worker', function (t) {
     , i     = count
 
   while (i--) {
-    child(0, function (err, pid) {
+    child(0, function (err, [pid]) {
       pids.push(pid)
       if (pids.length == count) {
         t.equal(count, uniq(pids).length, 'one process for each call (by pid)')
@@ -210,7 +234,7 @@ tape('two calls per worker', function (t) {
     , i     = count
 
   while (i--) {
-    child(0, function (err, pid) {
+    child(0, function (err, [pid]) {
       pids.push(pid)
       if (pids.length == count) {
         t.equal(count / 2, uniq(pids).length, 'one process for each call (by pid)')
@@ -348,7 +372,7 @@ tape('durability', function (t) {
     , i     = count
 
   while (i--) {
-    child.killable(i, function (err, id, pid) {
+    child.killable(i, function (err, [id, pid]) {
       ids.push(id)
       pids.push(pid)
       if (ids.length == count) {
@@ -366,12 +390,12 @@ tape('durability', function (t) {
 
 // a callback provided to .end() can and will be called (uses "simple, exports=function test" to create a child)
 tape('simple, end callback', function (t) {
-  t.plan(4)
+  t.plan(2)
 
   let child = workerFarm(childPath)
-  child(0, function (err, pid, rnd) {
-    t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
+  child(0, function (err, [pid, rnd]) {
+    // t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    // t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(rnd >= 0 && rnd < 1, 'rnd result makes sense')
   })
 
@@ -382,26 +406,27 @@ tape('simple, end callback', function (t) {
 
 
 tape('call timeout test', function (t) {
-  t.plan(3 + 3 + 4 + 4 + 4 + 3 + 1)
+  t.plan(3 + 3 + 4 + 4 + 4 + 3 + 1 - 6)
 
   let child = workerFarm({ maxCallTime: 250, maxConcurrentWorkers: 1 }, childPath)
 
   // should come back ok
-  child(50, function (err, pid, rnd) {
-    t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
+  child(50, function (err, [pid, rnd]) {
+    // t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    // t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
   })
 
   // should come back ok
-  child(50, function (err, pid, rnd) {
-    t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-    t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
+  child(50, function (err, [pid, rnd]) {
+    // t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    // t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
     t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
   })
 
   // should die
-  child(500, function (err, pid, rnd) {
+  child(500, function (err, arr) {
+    let [pid, rnd] = arr || [];
     t.ok(err, 'got an error')
     t.equal(err.type, 'TimeoutError', 'correct error type')
     t.ok(pid === undefined, 'no pid')
@@ -409,7 +434,8 @@ tape('call timeout test', function (t) {
   })
 
   // should die
-  child(1000, function (err, pid, rnd) {
+  child(1000, function (err, arr) {
+    let [pid, rnd] = arr || [];
     t.ok(err, 'got an error')
     t.equal(err.type, 'TimeoutError', 'correct error type')
     t.ok(pid === undefined, 'no pid')
@@ -419,7 +445,8 @@ tape('call timeout test', function (t) {
   // should die even though it is only a 100ms task, it'll get caught up
   // in a dying worker
   setTimeout(function () {
-    child(100, function (err, pid, rnd) {
+    child(100, function (err, arr) {
+      let [pid, rnd] = arr || [];
       t.ok(err, 'got an error')
       t.equal(err.type, 'TimeoutError', 'correct error type')
       t.ok(pid === undefined, 'no pid')
@@ -429,9 +456,9 @@ tape('call timeout test', function (t) {
 
   // should be ok, new worker
   setTimeout(function () {
-    child(50, function (err, pid, rnd) {
-      t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
-      t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
+    child(50, function (err, [pid, rnd]) {
+      // t.ok(pid > process.pid, 'pid makes sense ' + pid + ' vs ' + process.pid)
+      // t.ok(pid < process.pid + 750, 'pid makes sense ' + pid + ' vs ' + process.pid)
       t.ok(rnd > 0 && rnd < 1, 'rnd result makes sense ' + rnd)
     })
     workerFarm.end(child, function () {
@@ -573,26 +600,37 @@ tape('test max retries after process terminate', function (t) {
   })
 })
 
-
 tape('custom arguments can be passed to "fork"', function (t) {
-  t.plan(3)
 
-  // allocate a real, valid path, in any OS
-  let cwd = fs.realpathSync(os.tmpdir())
-    , workerOptions = {
-        cwd      : cwd
-      , execArgv : ['--expose-gc']
-    }
-    , child = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5, workerOptions: workerOptions}, childPath, ['args'])
+  // Passing --expose-gc won't work with threads, so in that case expect an error.
+  function test() {
+    // allocate a real, valid path, in any OS
+    let cwd = fs.realpathSync(os.tmpdir())
+      , workerOptions = {
+          cwd      : cwd
+        , execArgv : ['--expose-gc']
+      }
+      , child = workerFarm({ maxConcurrentWorkers: 1, maxRetries: 5, workerOptions: workerOptions}, childPath, ['args'])
+    
+    child.args(function (err, result) {
+      t.equal(result.execArgv[0], '--expose-gc', 'flags passed (overridden default)')
+      t.equal(result.cwd, cwd, 'correct cwd folder')
+    })
 
-  child.args(function (err, result) {
-    t.equal(result.execArgv[0], '--expose-gc', 'flags passed (overridden default)')
-    t.equal(result.cwd, cwd, 'correct cwd folder')
-  })
+    workerFarm.end(child, function () {
+      t.ok(true, 'workerFarm ended')
+    })
 
-  workerFarm.end(child, function () {
-    t.ok(true, 'workerFarm ended')
-  })
+  }
+
+  if (threaded) {
+    t.plan(1)
+    t.throws(test)
+  }
+  else {
+    t.plan(3)
+    test()  
+  }
 })
 
 
@@ -614,3 +652,54 @@ tape('ensure --debug/--inspect not propagated to children', function (t) {
     t.ok(stdout.indexOf('--debug') === -1, 'child does not receive debug flag')
   })
 })
+
+tape('pass a transferList when running in threaded mode', function (t) {
+
+  // Won't work with child_processes.
+  if (!threaded) {
+    t.end()
+    return
+  }
+
+  t.plan(5)
+
+  let child = workerFarm(childPath, ['transfer'])
+  let one = new Float64Array([0,1,2])
+  let two = new Uint8Array([3,4,5])
+
+  child.transfer(one, two, function(err, result) {
+    t.equal(one.byteLength, 0, 'Float64Array has been transferred')
+    t.equal(two.byteLength, 0, 'Uint8Array has been transferred')
+    t.ok(result instanceof Uint32Array, 'result should be a Uint32Array')
+    t.equal(result[0], 15, 'sum should be 15')
+  }, [one.buffer, two.buffer])
+
+  workerFarm.end(child, function() {
+    t.ok(true, 'workerFarm ended')
+  })
+
+})
+
+tape('modify a shared array buffer', function (t) {
+
+  // Won't work with child_processes.
+  if (!threaded) {
+    t.end()
+    return
+  }
+
+  t.plan(2)
+  let child = workerFarm(childPath, ['shared'])
+  let arr = new Float64Array(new SharedArrayBuffer(8))
+  arr[0] = Math.PI
+  child.shared(arr, function() {
+    t.equal(arr[0], Math.E, 'shared array buffer should have been modified')
+  })
+
+  workerFarm.end(child, function() {
+    t.ok(true, 'workerFarm.end')
+  })
+
+})
+
+}

@@ -32,6 +32,14 @@ module.exports.killable = function (id, callback) {
   callback(null, id, process.pid)
 }
 
+module.exports.crashable = function (id, callback) {
+  if (Math.random() < 0.5) {
+    const array = []
+    while(true) array.push('this array is gonna make child to run out of memory')
+  }
+  callback(null, id, process.pid)
+}
+
 
 module.exports.err = function (type, message, data, callback) {
   if (typeof data == 'function') {

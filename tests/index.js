@@ -338,7 +338,7 @@ tape('multiple concurrent calls', function (t) {
 
 // call a method that will die with a probability of 0.5 but expect that
 // we'll get results for each of our calls anyway
-tape('durability', function (t) {
+tape('durability due "process.exit(-1)"', function (t) {
   t.plan(3)
 
   let child = workerFarm({ maxConcurrentWorkers: 2 }, childPath, [ 'killable' ])
@@ -359,6 +359,89 @@ tape('durability', function (t) {
         })
       } else if (ids.length > count)
         t.fail('too many callbacks!')
+    })
+  }
+})
+
+// call a method that will die with a probability of 0.5 but expect that
+// all of them will be called when using maxCallsPerWorker=1 & maxRetries=0
+// `maxConcurrentCallsPerWorker=1` instead of `maxCallsPerWorker=1` fails this test! Why?
+tape('don\'t skip jobs with flaky "process.exit(-1)"', function (t) {
+  t.plan(2)
+
+  let child = workerFarm({ maxConcurrentWorkers: 2, maxRetries: 0, maxCallsPerWorker: 1}, childPath, [ 'killable' ])
+    , errors = []
+    , count = 20
+    , i     = count
+    , counter = 0
+
+  while (i--) {
+    child.killable(i, function (err, id, pid) {
+      counter++
+      if(err) errors.push(err)
+      if (counter == count) {
+        t.ok(errors.length > 2, 'got ' + (count - errors.length) + ' successes and ' + (errors.length) + ' errors, but run all of them!')
+        workerFarm.end(child, function () {
+          t.ok(true, 'workerFarm ended')
+        })
+      }
+    })
+  }
+})
+
+// call a method that will die with a probability of 0.5 but expect that
+// we'll get results for each of our calls anyway
+tape('durability due out-of-memory', function (t) {
+  t.plan(3)
+
+  let child = workerFarm({
+        workerOptions:{stdio: 'ignore'},
+        maxConcurrentWorkers: 1,
+        env: {NODE_OPTIONS: "--max-old-space-size=256"},  // Run out of memory faster.
+      }, childPath, [ 'crashable' ])
+    , ids   = []
+    , pids  = []
+    , count = 10
+    , i     = count
+
+  while (i--) {
+    child.crashable(i, function (err, id, pid) {
+      ids.push(id)
+      pids.push(pid)
+      if (ids.length == count) {
+        t.ok(uniq(pids).length > 2, 'processed by many (' + uniq(pids).length + ') workers, but got there in the end!')
+        t.ok(uniq(ids).length == count, 'received a single result for each unique call')
+        workerFarm.end(child, function () {
+          t.ok(true, 'workerFarm ended')
+        })
+      } else if (ids.length > count)
+        t.fail('too many callbacks!')
+    })
+  }
+})
+
+// call a method that will crash with a probability of 0.5 but expect that
+// all of them will be called when using maxCallsPerWorker=1 & maxRetries=0
+// `maxConcurrentCallsPerWorker=1` instead of `maxCallsPerWorker=1` fails this test! Why?
+tape('don\'t skip jobs with flaky out-of-memory', function (t) {
+  t.plan(2)
+
+  let child = workerFarm({ workerOptions:{stdio: 'ignore'}, maxConcurrentWorkers: 2, maxRetries: 0, maxCallsPerWorker: 1}, childPath, [ 'crashable' ])
+    , errors = []
+    , count = 20
+    , i     = count
+    , counter = 0
+
+  while (i--) {
+    child.crashable(i, function (err, id, pid) {
+      counter++
+      if(err) errors.push(err)
+      if (counter == count) {
+        t.ok(errors.length > 2, 'got ' + (count - errors.length) + ' successes and ' + (errors.length) + ' errors, but run all of them!')
+        workerFarm.end(child, function () {
+          t.ok(true, 'workerFarm ended')
+        })
+      }
     })
   }
 })
